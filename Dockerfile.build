@@ -1,0 +1,22 @@
+FROM rustlang/rust:nightly as build
+
+ENV USER=root
+
+WORKDIR /code
+RUN cargo init
+COPY Cargo.toml /code/Cargo.toml
+RUN cargo fetch
+
+COPY src /code/src
+
+RUN cargo test --offline
+RUN cargo build --release --offline
+
+FROM debian:buster-slim
+
+COPY --from=build /code/target/release/bitcoin-cli-wallet /usr/bin/wallet
+
+ENV RUST_LOG=info
+#ENV RUST_BACKTRACE=full
+
+ENTRYPOINT [ "/bin/bash" ]
