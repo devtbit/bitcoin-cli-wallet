@@ -32,6 +32,11 @@ You can also specify mnemonics inline:
 wallet --mnemonic "shove stage useful observe gospel bachelor decorate tiny swallow exhibit remember pepper" address generate
 ```
 
+For more options and commands:
+```
+wallet help
+```
+
 ### TODO list:
 
 - Generate and sign transactions
