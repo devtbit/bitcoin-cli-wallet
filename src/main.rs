@@ -9,24 +9,13 @@ use bitcoin_wallet::{
         MasterKeyEntropy,
     },
 };
-use bitcoin::{
-    network::constants::Network,
-};
+use bitcoin::{Address, network::constants::Network};
 
 mod cli;
 mod crypto;
 mod io;
 mod master;
 mod utils;
-
-fn parse_address_type(str_input: &str) -> AccountAddressType {
-    match str_input {
-        "p2wpkh" => AccountAddressType::P2WPKH,
-        "p2wsh" => AccountAddressType::P2WSH(4711),
-        "p2pkh" => AccountAddressType::P2PKH,
-        "p2shwpkh" | _ => AccountAddressType::P2SHWPKH,
-    }
-}
 
 fn main() {
     let opts: cli::Opts = cli::Opts::parse();
@@ -36,7 +25,6 @@ fn main() {
     }
 
     let mut network = Network::Bitcoin;
-    let address_type: AccountAddressType;
 
     let (password, success) = io::get_secret(
         "Enter your password",
@@ -66,17 +54,29 @@ fn main() {
             }
 
             let address_type: AccountAddressType = match &cmd_opts.address_type {
-                Some(addr) => parse_address_type(&addr),
+                Some(addr) => {
+                    match addr.as_str() {
+                        "p2wpkh" => AccountAddressType::P2WPKH,
+                        "p2wsh" => AccountAddressType::P2WSH(4711),
+                        "p2pkh" => AccountAddressType::P2PKH,
+                        "p2shwpkh" | _ => AccountAddressType::P2SHWPKH,
+                    }
+                },
                 None => AccountAddressType::P2SHWPKH,
             };
 
             let n = cmd_opts.account_number;
             let m = cmd_opts.subaccount;
-            let l = cmd_opts.look_ahead;
+            let k = cmd_opts.kix;
             match &cmd_opts.subcommand {
                 cli::AddressSubCommand::Generate(_) => {
-                    let mut acc = master_acc.new_account(address_type, n, m, l);
-                    let addr = acc.next_key().unwrap().address.clone();
+                    let mut acc = master_acc.new_account(password.clone(), address_type, n, m);
+                    let pk = acc.compute_base_public_key(k).unwrap();
+                    let addr = match address_type {
+                        AccountAddressType::P2PKH => Address::p2pkh(&pk, network),
+                        AccountAddressType::P2SHWPKH => Address::p2shwpkh(&pk, network),
+                        _ | AccountAddressType::P2WPKH => Address::p2wpkh(&pk, network),
+                    };
                     println!("{}{}Address:{}{} {} {}         ",
                         style::Bold, color::Fg(color::Blue), style::Reset, color::Fg(color::Blue),
                         addr, style::Reset
@@ -98,7 +98,7 @@ fn main() {
                         master_acc = master::Master::new(password.clone(), entropy, network).unwrap();
                     }
                 },
-                cli::MasterSubCommand::Recover(sub_opts) => {
+                cli::MasterSubCommand::Recover(_) => {
                     if let Some(words) = opts.with_mnemonic {
                         master_acc = master::Master::new_from_inline_mnemonic(words.clone(), password.clone(), network).unwrap();
                     } else {
@@ -107,7 +107,7 @@ fn main() {
                 }
             }
             if opts.export {
-                master_acc.export_master(&opts.prefix.unwrap());
+                master_acc.export_master(password.clone(), &opts.prefix.unwrap());
             }
         }
     }

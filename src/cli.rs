@@ -70,8 +70,8 @@ pub struct AddressCommand {
     pub account_number: u32,
     #[clap(short, long = "sub", value_name = "SUBACCOUNT", about = "Sub account number", default_value = "0")]
     pub subaccount: u32,
-    #[clap(long = "look-ahead", value_name = "L", about = "Look ahead value", default_value = "10")]
-    pub look_ahead: u32,
+    #[clap(short, long = "kix", value_name = "K", about = "Key derivation instance", default_value = "0")]
+    pub kix: u32,
     #[clap(long = "script-hash", value_name = "HASH", about = "The script hash to use for P2WSH addresses")]
     pub script_hash: Option<String>,
     #[clap(subcommand)]
