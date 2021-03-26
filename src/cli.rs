@@ -9,8 +9,8 @@ pub struct Opts {
     pub with_regtest: bool,
     #[clap(long, about = "Export private and public encrypted master keys")]
     pub export: bool,
-    #[clap(long = "master-prefix", about = "Prefix for files with private and public encrypted master keys")]
-    pub prefix: Option<String>,
+    #[clap(long = "label", about = "Label for files with private and public encrypted master keys")]
+    pub label: Option<String>,
     #[clap(short = 's', long, value_name = "N", about = "Use Shamir Shares")]
     pub shamir_shares: Option<u8>,
     #[clap(long = "mnemonic", value_name = "WORDS", about = "Inline mnemonic")]
@@ -92,8 +92,8 @@ pub fn validate_opts(opts: &Opts, _: bool) -> Result<&str, &str> {
         return Err("testnet or regtest, only specify one.");
     }
 
-    if opts.export && opts.prefix == None {
-        return Err("Need to specify a master prefix for export file");
+    if opts.export && opts.label == None {
+        return Err("Need to specify a label for export file");
     }
 
     match &opts.subcommand {

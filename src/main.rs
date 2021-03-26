@@ -45,8 +45,8 @@ fn main() {
 
     match &opts.subcommand {
         cli::SubCommand::Address(cmd_opts) => {
-            if let Some(prefix) = opts.prefix {
-                master_acc = master::Master::new_from_encrypted_files(&prefix, password.clone()).unwrap();
+            if let Some(label) = opts.label {
+                master_acc = master::Master::new_from_encrypted_files(&label, password.clone()).unwrap();
             } else if let Some(words) = opts.with_mnemonic {
                 master_acc = master::Master::new_from_inline_mnemonic(words.clone(), password.clone(), network).unwrap();
             } else {
@@ -107,7 +107,7 @@ fn main() {
                 }
             }
             if opts.export {
-                master_acc.export_master(password.clone(), &opts.prefix.unwrap());
+                master_acc.export_master(password.clone(), &opts.label.unwrap());
             }
         }
     }
