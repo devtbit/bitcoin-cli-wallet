@@ -10,6 +10,11 @@ use bitcoin_wallet::{
     },
 };
 use bitcoin::{Address, network::constants::Network};
+use qrcode::{
+    QrCode,
+    render::unicode,  
+};
+
 
 mod cli;
 mod crypto;
@@ -81,6 +86,12 @@ fn main() {
                         style::Bold, color::Fg(color::Blue), style::Reset, color::Fg(color::Blue),
                         addr, style::Reset
                     );
+                    let qr = QrCode::new(addr.to_string()).unwrap();
+                    let img = qr.render::<unicode::Dense1x2>()
+                        .dark_color(unicode::Dense1x2::Light)
+                        .light_color(unicode::Dense1x2::Dark)
+                        .build();
+                    println!("{}", img);
                 }
             }
         },
