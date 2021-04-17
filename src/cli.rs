@@ -25,6 +25,8 @@ pub enum SubCommand {
     Address(AddressCommand),
     #[clap(about = "Manage master account")]
     Master(MasterCommand),
+    #[clap(about = "Fetch data from blockchain")]
+    Get(GetCommand),
 }
 
 #[derive(Clap)]
@@ -89,6 +91,50 @@ pub enum AddressSubCommand {
 #[derive(Clap)]
 pub struct GenerateAddressSubCommand {}
 
+#[derive(Clap)]
+pub struct GetCommand {
+    #[clap(long = "rpc", value_name = "ENDPOINT", about = "Connection string to a full node through RPC (with the following format USER:PASSWORD@[http:https]://ADDRESS:PORT")]
+    pub rpc: String,
+    #[clap(subcommand)]
+    pub subcommand: GetSubCommand,
+}
+
+#[derive(Clap)]
+pub enum GetSubCommand {
+    #[clap(about = "Get ")]
+    Coins(CoinsGetSubCommand),
+}
+
+#[derive(Clap)]
+pub struct CoinsGetSubCommand {
+    #[clap(long, value_name = "ADDR", about = "Address to fetch the coins from")]
+    pub address: Option<String>,
+    #[clap(short = 'n', long = "number", value_name = "ACCOUNT", about = "Account number")]
+    pub account_number: Option<u32>,
+    #[clap(short, long = "sub", value_name = "SUBACCOUNT", about = "Sub account number")]
+    pub subaccount: Option<u32>,
+    #[clap(short, long = "kix", value_name = "K", about = "Key derivation instance")]
+    pub kix: Option<u32>,
+    #[clap(long = "rescan", about = "Rescan the blockchain")]
+    pub rescan: bool,
+    #[clap(long, about = "Block height starting point to start scanning for coins")]
+    pub start_block: Option<usize>,
+    #[clap(long, about = "Block height end point to start scanning for coins")]
+    pub end_block: Option<usize>,
+    #[clap(long, value_name = "BLOCKS", about = "Scan specified number of blocks from the last one")]
+    pub last: Option<usize>,
+    #[clap(long = "type", value_name = "TYPE", about = "Type of address")]
+    pub address_type: Option<String>,
+    #[clap(long, about = "Display amounts in Sats")]
+    pub sats: bool,
+    #[clap(long, value_name = "MAX", about = "Limit the number of coins to fetch")]
+    pub limit: Option<i32>,
+    #[clap(long, about = "Target amount to be gathered")]
+    pub amount: Option<String>,
+    #[clap(long, about = "Flag to look for coins in descending order")]
+    pub desc: bool,
+}
+
 pub fn validate_opts(opts: &Opts, _: bool) -> Result<&str, &str> {
     if opts.with_testnet && opts.with_regtest {
         return Err("testnet or regtest, only specify one.");
@@ -129,6 +175,49 @@ pub fn validate_opts(opts: &Opts, _: bool) -> Result<&str, &str> {
                     }
                 },
                 MasterSubCommand::Pubkey(_) => {},
+            }
+        },
+        SubCommand::Get(sub_opts) => {
+            match &sub_opts.subcommand {
+                GetSubCommand::Coins(o) => {
+                    if !o.rescan {
+                        if let Some(_) = o.start_block {
+                            return Err("Missing --rescan argument for start block option");
+                        } else if let Some(_) = o.end_block {
+                            return Err("Missing --rescan argument for end block option");
+                        } else if let Some(_) = o.last {
+                            return Err("Missing --rescan argument for last option");
+                        }
+                    } else {
+                        if let Some(_) = o.last {
+                            if let Some(_) = o.start_block {
+                                return Err("Cannot specify last argument with start block");
+                            } else if let Some(_) = o.end_block {
+                                return Err("Cannot specify last argument with end block");
+                            }
+                        }
+                    }
+                    if let Some(_) = o.address {
+                        if let Some(_) = o.account_number {
+                            return Err("Cannot specify address and account number");
+                        } else if let Some(_) = o.subaccount {
+                            return Err("Cannot specify address and sub account number");
+                        } else if let Some(_) = o.kix {
+                            return Err("Cannot specify address and key derivation instance");
+                        } else if let Some(_) = o.address_type {
+                            return Err("Cannot specify address type, it will be inferred from the input address");
+                        }
+                    } else {
+                        if o.account_number == None {
+                            return Err("Need to specify at least an address or an account number");
+                        }
+                    }
+                    if let Some(_) = o.limit {
+                        if let Some(_) = o.amount {
+                            return Err("Cannot specify both limit and a target amount");
+                        }
+                    }
+                },
             }
         },
     }

@@ -18,5 +18,5 @@ COPY --from=build /code/target/release/bitcoin-cli-wallet /usr/bin/wallet
 
 ENV RUST_LOG=info
 #ENV RUST_BACKTRACE=full
-
+WORKDIR /home
 ENTRYPOINT [ "/bin/bash" ]

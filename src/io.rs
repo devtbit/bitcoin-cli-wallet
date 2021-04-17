@@ -8,6 +8,10 @@ use std::{
 };
 use termion::input::TermRead;
 use bitcoin_wallet::mnemonic::Mnemonic;
+use bitcoincore_rpc::{
+    bitcoin::Amount,
+    json::ListUnspentResultEntry,
+};
 use qrcode::{
     QrCode,
     render::unicode,  
@@ -84,6 +88,38 @@ pub fn get_secret(prompt: &str, confirm: Option<&str>) -> (String, bool) {
 
     ("".to_string(), false)
 }
+
+pub fn show_coins(coins: &Vec<ListUnspentResultEntry>, total: Amount, as_sats: bool) {
+    let den = match as_sats {
+        true => "sats",
+        false => "BTC",
+    };
+    fn show_line() {
+        for _ in 0..67 {
+            print!("-");
+        }
+    }
+    let mut i = 0;
+    for coin in coins {
+        let amount = match as_sats {
+            true => coin.amount.as_sat().to_string(),
+            false => coin.amount.as_btc().to_string(),
+        };
+        show_line();
+        println!("\n{}:{}", coin.txid, coin.vout);
+        show_line();
+        println!("\n{}:\t{} {} ({} confirmations)", i+1, amount, den, coin.confirmations);
+        show_line();
+        print!("\n");
+        i = i + 1;
+    }
+    let aggregate = match as_sats {
+        true => total.as_sat().to_string(),
+        false => total.as_btc().to_string(),
+    };
+    println!("TOTAL: {} {}", aggregate, den);
+}
+
 pub fn show_qr(data: String) {
     let qr = QrCode::new(data).unwrap();
     let img = qr.render::<unicode::Dense1x2>()
