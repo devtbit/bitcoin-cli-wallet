@@ -14,10 +14,9 @@ use bitcoin_wallet::{
     error::Error,
 };
 use bitcoin::{
+    PublicKey, blockdata::transaction::{SigHashType, Transaction, TxOut},
     network::constants::Network,
-    blockdata::{
-        transaction::{SigHashType, Transaction, TxOut},
-    },
+    util::bip32::ExtendedPubKey,
 };
 use rand::Rng;
 use termion::{
@@ -149,8 +148,8 @@ impl Master {
         })
     }
 
-    pub fn get_master(&self) -> &MasterAccount {
-        &self.encrypted
+    pub fn get_master_public(&self) -> &ExtendedPubKey {
+        &self.encrypted.master_public()
     }
 
     pub fn new_account(
@@ -200,5 +199,17 @@ impl Master {
     ) -> Result<usize, Error> {
         let mut unlocker = Unlocker::new_for_master(&self.encrypted, &password).unwrap();
         self.encrypted.sign(tx, SigHashType::All, &(|_| Some(txout.clone())), &mut unlocker)
+    }
+
+    pub fn get_child_pk(
+        &self,
+        password: String,
+        address_type: AccountAddressType,
+        n: u32,
+        m: u32,
+        k: u32,
+    ) -> Result<PublicKey, Error> {
+        let acc = self.new_account(password, address_type, n, m);
+        acc.compute_base_public_key(k)
     }
 }

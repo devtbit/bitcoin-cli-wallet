@@ -39,6 +39,8 @@ pub enum MasterSubCommand {
     New(NewMasterSubCommand),
     #[clap(about = "Recover master account from mnemonic")]
     Recover(RecoverMasterSubCommand),
+    #[clap(about = "Show master xpubkey (hex)")]
+    Pubkey(PubkeyMasterSubCommand),
 }
 
 #[derive(Clap)]
@@ -60,7 +62,7 @@ pub struct RecoverMasterSubCommand {
 }
 
 #[derive(Clap)]
-pub struct ShowMasterSubCommand {}
+pub struct PubkeyMasterSubCommand {}
 
 #[derive(Clap)]
 pub struct AddressCommand {
@@ -126,6 +128,7 @@ pub fn validate_opts(opts: &Opts, _: bool) -> Result<&str, &str> {
                         }
                     }
                 },
+                MasterSubCommand::Pubkey(_) => {},
             }
         },
     }

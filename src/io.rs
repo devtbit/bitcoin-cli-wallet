@@ -8,6 +8,10 @@ use std::{
 };
 use termion::input::TermRead;
 use bitcoin_wallet::mnemonic::Mnemonic;
+use qrcode::{
+    QrCode,
+    render::unicode,  
+};
 
 pub fn show_new_mnemonic_from_words(mnemonic: &Vec<&str>) {
     let stdout = stdout();
@@ -79,4 +83,12 @@ pub fn get_secret(prompt: &str, confirm: Option<&str>) -> (String, bool) {
     }
 
     ("".to_string(), false)
+}
+pub fn show_qr(data: String) {
+    let qr = QrCode::new(data).unwrap();
+    let img = qr.render::<unicode::Dense1x2>()
+        .dark_color(unicode::Dense1x2::Light)
+        .light_color(unicode::Dense1x2::Dark)
+        .build();
+    println!("{}", img);
 }
